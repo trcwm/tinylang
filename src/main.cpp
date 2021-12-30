@@ -6,6 +6,12 @@
 
 int main(int argc, char *argv[])
 {
+    if (argc < 2)
+    {
+        std::cerr << "Usage: " << argv[0] << " <input file>\n";
+        return EXIT_FAILURE;
+    }
+
     std::ifstream ifile(argv[1]);
 
     FileSrcStream fstream(ifile);
@@ -16,7 +22,6 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-
     Parser parser(fstream);
 
     if (!parser.parse())
@@ -24,19 +29,10 @@ int main(int argc, char *argv[])
         std::cout << "MEH!\n";
         return EXIT_FAILURE;
     }
-
-/*
-    auto tok = lexer.nextToken();
-    while((tok.m_type != Lexer::TokenType::ERROR) &&
-        (tok.m_type != Lexer::TokenType::ENDFILE))
+    else
     {
-        std::cout << "tok: (" << tok.m_pos.m_line << "," << tok.m_pos.m_col << ")  " << tok.m_tokstr << " " << static_cast<int>(tok.m_type) << "\n";
-        tok = lexer.nextToken();
+        std::cout << "YAY!\n";
     }
-
-    std::cout << "tok: " << static_cast<int>(tok.m_type) << "\n";
-    
-*/
 
     return EXIT_SUCCESS;
 }
