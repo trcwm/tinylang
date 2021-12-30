@@ -1,0 +1,49 @@
+#pragma once
+
+#include <array>
+#include "lexer.h"
+
+class Parser
+{
+public:
+    Parser(ISrcStream &is) : m_lex(is)
+    {
+        setupLexer();
+    }
+
+    bool parse();
+
+protected:
+    void setupLexer();
+
+    bool statements();
+    bool statement();
+    bool assignment();
+    bool expression();
+    bool term();
+    bool factor();
+
+    bool match(Lexer::TokenType type);
+
+    void error(const char *txt);
+
+    Lexer::Lex   m_lex;
+    Lexer::Token m_token;
+    Lexer::Token m_matchedToken;
+
+    struct KeywordDef
+    {
+        const char *name;
+        uint16_t   id;
+    };
+
+    static constexpr uint16_t TOK_FOR = 1000;
+    static constexpr uint16_t TOK_TO  = 1001;
+    static constexpr uint16_t TOK_ENDFOR = 1002;
+
+    static constexpr std::array<KeywordDef, 3> ms_keywords = {{
+        {"for", TOK_FOR},
+        {"to", TOK_TO},
+        {"endfor", TOK_ENDFOR}
+    }};
+};

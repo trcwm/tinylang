@@ -1,0 +1,12 @@
+# tinylang grammar
+
+statements ::= statement [statements]
+
+statement  ::= assignment | for_statement
+
+assignment    ::= VARIABLE = expr
+for_statement ::= 'FOR' VARIABLE '=' expr 'TO' expr
+
+expr ::= term { ('+'|'-') term }
+term ::= factor { ('*'|'/') factor }
+factor ::= '(' ')' | NUMBER | VARIABLE | '-' NUMBER
