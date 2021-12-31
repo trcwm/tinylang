@@ -24,7 +24,9 @@ int main(int argc, char *argv[])
 
     Parser parser(fstream);
 
-    if (!parser.parse())
+    auto parseResults = parser.parse();
+
+    if (!parseResults.m_ok)
     {
         std::cout << "MEH!\n";
         return EXIT_FAILURE;
@@ -32,7 +34,14 @@ int main(int argc, char *argv[])
     else
     {
         std::cout << "YAY!\n";
+
+        // dump ast
+        std::cout << "Dumping AST:\n\n";
+        parseResults.m_node->dump(std::cout, 0);
     }
+
+
+
 
     return EXIT_SUCCESS;
 }

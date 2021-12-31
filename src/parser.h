@@ -2,6 +2,7 @@
 
 #include <array>
 #include "lexer.h"
+#include "ast.h"
 
 class Parser
 {
@@ -11,17 +12,33 @@ public:
         setupLexer();
     }
 
-    bool parse();
+    struct ParseResult
+    {
+        std::shared_ptr<ASTNode> m_node;
+        bool     m_ok;
+
+        static ParseResult invalid()
+        {
+            return ParseResult{nullptr, false};
+        }
+
+        static ParseResult valid(std::shared_ptr<ASTNode> &node)
+        {
+            return ParseResult{node, true};
+        }        
+    };
+
+    ParseResult parse();
 
 protected:
     void setupLexer();
 
-    bool statements();
-    bool statement();
-    bool assignment();
-    bool expression();
-    bool term();
-    bool factor();
+    ParseResult statements();
+    ParseResult statement();
+    ParseResult assignment();
+    ParseResult expression();
+    ParseResult term();
+    ParseResult factor();
 
     bool match(Lexer::TokenType type);
 
