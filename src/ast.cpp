@@ -2,11 +2,6 @@
 
 void ASTNode::dump(std::ostream &os, size_t depth) const noexcept
 {
-    for(auto const& child : m_children)
-    {
-        child->dump(os, depth+1);
-    }
-
     for(size_t i=0; i<depth; i++)
     {
         os << "  ";
@@ -18,7 +13,7 @@ void ASTNode::dump(std::ostream &os, size_t depth) const noexcept
         os << "ADD\n";
         break;
     case NodeType::SUB:
-        os << "ADD\n";
+        os << "SUB\n";
         break;
     case NodeType::ASSIGN:
         os << "ASSIGN\n";
@@ -35,8 +30,8 @@ void ASTNode::dump(std::ostream &os, size_t depth) const noexcept
     case NodeType::DIV:
         os << "DIV\n";
         break;
-    case NodeType::STATEMENT:
-        os << "STATEMENT\n";
+    case NodeType::STATEMENTS:
+        os << "STATEMENTS\n";
         break;
     case NodeType::NEG:
         os << "NEG\n";
@@ -46,6 +41,14 @@ void ASTNode::dump(std::ostream &os, size_t depth) const noexcept
         break;    
     case NodeType::TOP:
         os << "TOP\n";
-        break;                
+        break;        
+    case NodeType::FORLOOP:
+        os << "FORLOOP\n";
+        break;        
+    }
+
+    for(auto const& child : m_children)
+    {
+        child->dump(os, depth+1);
     }
 }

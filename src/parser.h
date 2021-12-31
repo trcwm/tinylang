@@ -36,10 +36,14 @@ protected:
     ParseResult statements();
     ParseResult statement();
     ParseResult assignment();
+    ParseResult assignment_rhs();
     ParseResult expression();
     ParseResult term();
     ParseResult factor();
 
+    ParseResult forstatement();
+
+    bool match(uint16_t id);
     bool match(Lexer::TokenType type);
 
     void error(const char *txt);

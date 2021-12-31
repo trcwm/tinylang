@@ -19,9 +19,10 @@ public:
         DIV,
         NEG,
         VAR,
+        FORLOOP,
         INTEGER,
         ASSIGN,
-        STATEMENT
+        STATEMENTS
     };
 
     explicit ASTNode(NodeType mytype) : m_type(mytype) {}

@@ -1,4 +1,4 @@
-                                                                          #include "parser.h"
+#include "parser.h"
 
 void Parser::setupLexer()
 {
@@ -20,6 +20,17 @@ Parser::ParseResult Parser::parse()
     return result;
 }
 
+bool Parser::match(uint16_t id)
+{
+    if (static_cast<uint16_t>(m_token.m_type) == id)
+    {
+        m_matchedToken = m_token;
+        m_token = m_lex.nextToken();
+        return true;
+    }
+    return false;
+}
+
 bool Parser::match(Lexer::TokenType type)
 {
     if (m_token.m_type == type)
@@ -34,26 +45,74 @@ bool Parser::match(Lexer::TokenType type)
 Parser::ParseResult Parser::statements()
 {
     Parser::ParseResult result;
-    result.m_node = std::make_shared<ASTNode>(ASTNode::NodeType::TOP);
+    result.m_node = std::make_shared<ASTNode>(ASTNode::NodeType::STATEMENTS);
 
     while(m_token.m_type != Lexer::TokenType::ENDFILE)
     {
         auto parseResult = statement();
         if (!parseResult.m_ok)
         {
-            error("Invalid statement");
-            return ParseResult::invalid();
+            break;    
         }
         
         result.m_node->addChildNode(parseResult.m_node);
     };
 
     result.m_ok = true;
-
     return result;
 }
 
 Parser::ParseResult Parser::statement()
+{
+    auto tryAssignment = assignment();
+    if (tryAssignment.m_ok)
+    {
+        return tryAssignment;
+    }
+
+    if (match(TOK_FOR))
+    {
+        // assignment expression
+        auto assignResult = assignment();
+        if (!assignResult.m_ok)
+        {
+            error("Expected an assignment in FOR loop");
+            return ParseResult::invalid();
+        }
+
+        if(!match(TOK_TO))
+        {
+            error("Expected a TO keyword in FOR loop");
+            return ParseResult::invalid();
+        }
+
+        auto toResult = expression();
+        if (!toResult.m_ok)
+        {
+            error("Exptected a valid expression after TO");
+            return ParseResult::invalid();
+        }
+
+        auto block = statements();
+        if (!block.m_ok)
+        {
+            return ParseResult::invalid();
+        }
+
+        // create for loop AST node
+        auto loopNode = std::make_shared<ASTNode>(ASTNode::NodeType::FORLOOP);
+
+        loopNode->addChildNode(assignResult.m_node);
+        loopNode->addChildNode(toResult.m_node);
+        loopNode->addChildNode(block.m_node);
+
+        return ParseResult::valid(loopNode);
+    }
+
+    return ParseResult::invalid();
+}
+
+Parser::ParseResult Parser::assignment()
 {
     if (match(Lexer::TokenType::IDENT))
     {
@@ -64,7 +123,7 @@ Parser::ParseResult Parser::statement()
         leftNode->m_varName  = ident;
 
         // get right side of the assignment tree
-        auto assignResult = assignment();
+        auto assignResult = assignment_rhs();
         if (!assignResult.m_ok)
         {
             return Parser::ParseResult::invalid();
@@ -78,12 +137,11 @@ Parser::ParseResult Parser::statement()
 
         return ParseResult{assignNode, true};
     }
-
-    error("Assignment expected");
-    return Parser::ParseResult::invalid();
+    
+    return ParseResult::invalid();
 }
 
-Parser::ParseResult Parser::assignment()
+Parser::ParseResult Parser::assignment_rhs()
 {
     if (!match(Lexer::TokenType::EQUALS))
     {
@@ -115,6 +173,7 @@ Parser::ParseResult Parser::expression()
     while(match(Lexer::TokenType::PLUS) || match(Lexer::TokenType::MINUS))
     {
         auto op = m_matchedToken.m_tokstr;
+        auto opType = m_matchedToken.m_type;
 
         auto rightTermResults = term();
         if (!rightTermResults.m_ok)
@@ -122,10 +181,10 @@ Parser::ParseResult Parser::expression()
             return ParseResult::invalid();
         }
 
-        std::cout << "OP: " << op << "\n";
+        //std::cout << "OP: " << op << "\n";
 
         std::shared_ptr<ASTNode> opNode;
-        if (m_matchedToken.m_type == Lexer::TokenType::PLUS)
+        if (opType == Lexer::TokenType::PLUS)
         {
             opNode = std::make_shared<ASTNode>(ASTNode::NodeType::ADD);
         }
@@ -155,6 +214,7 @@ Parser::ParseResult Parser::term()
     while(match(Lexer::TokenType::STAR) || match(Lexer::TokenType::SLASH))
     {
         auto op = m_matchedToken.m_tokstr;
+        auto opType = m_matchedToken.m_type;
 
         auto rightFactorResults = factor();
         if (!rightFactorResults.m_ok)
@@ -162,10 +222,10 @@ Parser::ParseResult Parser::term()
             return ParseResult::invalid();
         }
 
-        std::cout << "OP: " << op << "\n";
+        //std::cout << "OP: " << op << "\n";
 
         std::shared_ptr<ASTNode> opNode;
-        if (m_matchedToken.m_type == Lexer::TokenType::STAR)
+        if (opType == Lexer::TokenType::STAR)
         {
             opNode = std::make_shared<ASTNode>(ASTNode::NodeType::MUL);
         }
@@ -229,8 +289,8 @@ Parser::ParseResult Parser::factor()
 
         unaryNode->addChildNode(numNode);
 
-        std::cout << "VAR: " << m_matchedToken.m_tokstr << "\n";
-        std::cout << "- (unary)\n";
+        //std::cout << "VAR: " << m_matchedToken.m_tokstr << "\n";
+        //std::cout << "- (unary)\n";
         return ParseResult::valid(unaryNode);
     }
 
