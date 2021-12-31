@@ -6,6 +6,17 @@
 #include <cstdint>
 #include <iostream>
 
+class ASTNode; //predeclaration
+
+class ASTVisitorBase
+{
+public:
+    virtual ~ASTVisitorBase() = default;
+    
+    virtual void visit(ASTNode &v) {};
+    virtual void visit(const ASTNode &v) {};
+};
+
 class ASTNode
 {
 public:
@@ -26,6 +37,16 @@ public:
     };
 
     explicit ASTNode(NodeType mytype) : m_type(mytype) {}
+
+    virtual void accept(ASTVisitorBase& v) 
+    {
+        v.visit(*this);
+    }
+
+    virtual void accept(ASTVisitorBase& v) const
+    {
+        v.visit(*this);
+    }
 
     void addChildNode(std::shared_ptr<ASTNode> node)
     {

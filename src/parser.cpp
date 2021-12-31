@@ -44,6 +44,10 @@ bool Parser::match(Lexer::TokenType type)
 
 Parser::ParseResult Parser::statements()
 {
+    // note: a statements block may be empty
+    //       so we should return invalid
+    //       if things fail
+
     Parser::ParseResult result;
     result.m_node = std::make_shared<ASTNode>(ASTNode::NodeType::STATEMENTS);
 
@@ -96,6 +100,12 @@ Parser::ParseResult Parser::statement()
         auto block = statements();
         if (!block.m_ok)
         {
+            return ParseResult::invalid();
+        }
+
+        if (!match(TOK_ENDFOR))
+        {
+            error("FOR loop is missing ENDFOR");
             return ParseResult::invalid();
         }
 

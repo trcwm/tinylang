@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 #include "parser.h"
+#include "constprop.h"
 
 int main(int argc, char *argv[])
 {
@@ -38,11 +39,14 @@ int main(int argc, char *argv[])
         // dump ast
         std::cout << "Dumping AST:\n\n";
         parseResults.m_node->dump(std::cout, 0);
+
+        ConstantPropagation::CPVisitor cpvisitor;
+        cpvisitor.visit(*parseResults.m_node.get());
+
+        std::cout << "Dumping AST:\n\n";
+        parseResults.m_node->dump(std::cout, 0);
+
     }
-
-
-
 
     return EXIT_SUCCESS;
 }
-
