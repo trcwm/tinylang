@@ -6,6 +6,8 @@
 #include <cstdint>
 #include <iostream>
 
+#include "mytypes.h"
+
 class ASTNode; //predeclaration
 
 class ASTVisitorBase
@@ -29,6 +31,7 @@ public:
         MUL,
         DIV,
         NEG,
+        VARDECL,
         VAR,
         FORLOOP,
         INTEGER,
@@ -63,6 +66,8 @@ public:
     void dump(std::ostream &os, size_t depth = 0) const noexcept;
 
     NodeType        m_type;
-    int16_t         m_intValue;
-    std::string     m_varName;
+    int16_t         m_intValue;     ///< variable value (when type = INTEGER)
+    std::string     m_varName;      ///< variable name (when type = VAR)
+    LinePos         m_pos;          ///< line position where this node originated
+    SymbolType      m_symType;      ///< symbolt type (when type = VARDECL)
 };

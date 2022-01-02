@@ -20,6 +20,15 @@ Parser::ParseResult Parser::parse()
     return result;
 }
 
+bool Parser::checkToken(Lexer::TokenType type)
+{
+    if (m_token.m_type == type)
+    {
+        return true;
+    }
+    return false;
+}
+
 bool Parser::match(uint16_t id)
 {
     if (static_cast<uint16_t>(m_token.m_type) == id)
@@ -74,8 +83,65 @@ Parser::ParseResult Parser::statement()
         return tryAssignment;
     }
 
+    auto tryFor = forStatement();
+    if (tryFor.m_ok)
+    {
+        return tryFor;
+    }
+
+    auto tryVar = varStatement();
+    if (tryVar.m_ok)
+    {
+        return tryVar;
+    }
+
+    return ParseResult::invalid();
+}
+
+Parser::ParseResult Parser::assignment()
+{
+    if (match(Lexer::TokenType::IDENT))
+    {
+        auto ident = m_matchedToken.m_tokstr;
+#if 0
+        // create left side of the assignment tree
+        auto leftNode = std::make_shared<ASTNode>(ASTNode::NodeType::VAR);
+        leftNode->m_varName  = ident;
+#endif
+        // get right side of the assignment tree
+        auto assignResult = assignment_rhs();
+        if (!assignResult.m_ok)
+        {
+            return Parser::ParseResult::invalid();
+        }
+
+        // create assignment AST node
+        auto assignNode = std::make_shared<ASTNode>(ASTNode::NodeType::ASSIGN);
+        assignNode->m_varName = ident;
+        assignNode->addChildNode(assignResult.m_node);
+
+        return ParseResult{assignNode, true};
+    }
+    
+    return ParseResult::invalid();
+}
+
+Parser::ParseResult Parser::forStatement()
+{
     if (match(TOK_FOR))
     {
+        auto varDeclNode = std::make_shared<ASTNode>(ASTNode::NodeType::VARDECL);
+
+        // peek at the variable and make sure it is in the symbol table
+        if (!checkToken(Lexer::TokenType::IDENT))
+        {            
+            error("Expected an identifier in FOR loop");
+            return ParseResult::invalid();            
+        }
+
+        varDeclNode->m_varName = m_token.m_tokstr;
+        varDeclNode->m_symType = SymbolType::INTEGER;   
+
         // assignment expression
         auto assignResult = assignment();
         if (!assignResult.m_ok)
@@ -112,6 +178,7 @@ Parser::ParseResult Parser::statement()
         // create for loop AST node
         auto loopNode = std::make_shared<ASTNode>(ASTNode::NodeType::FORLOOP);
 
+        loopNode->addChildNode(varDeclNode);
         loopNode->addChildNode(assignResult.m_node);
         loopNode->addChildNode(toResult.m_node);
         loopNode->addChildNode(block.m_node);
@@ -122,33 +189,39 @@ Parser::ParseResult Parser::statement()
     return ParseResult::invalid();
 }
 
-Parser::ParseResult Parser::assignment()
+Parser::ParseResult Parser::varStatement()
 {
-    if (match(Lexer::TokenType::IDENT))
+    if (match(TOK_VAR))
     {
-        auto ident = m_matchedToken.m_tokstr;
-
-        // create left side of the assignment tree
-        auto leftNode = std::make_shared<ASTNode>(ASTNode::NodeType::VAR);
-        leftNode->m_varName  = ident;
-
-        // get right side of the assignment tree
-        auto assignResult = assignment_rhs();
-        if (!assignResult.m_ok)
+        if (!match(Lexer::TokenType::IDENT))
         {
-            return Parser::ParseResult::invalid();
+            error("Expected an identifier name after VAR");
+            return ParseResult::invalid();
         }
 
-        // create assignment AST node
-        auto assignNode = std::make_shared<ASTNode>(ASTNode::NodeType::ASSIGN);
+        auto varDeclNode = std::make_shared<ASTNode>(ASTNode::NodeType::VARDECL);
+        varDeclNode->m_varName = m_matchedToken.m_tokstr;
+        varDeclNode->m_symType = SymbolType::INTEGER;
 
-        assignNode->addChildNode(leftNode);
-        assignNode->addChildNode(assignResult.m_node);
+        while(match(Lexer::TokenType::COMMA))
+        {
+            if (!match(Lexer::TokenType::IDENT))
+            {
+                error("Expected an identifier name after comma");
+                return ParseResult::invalid();
+            }
 
-        return ParseResult{assignNode, true};
+            auto childNode = std::make_shared<ASTNode>(ASTNode::NodeType::VARDECL);
+            childNode->m_varName = m_matchedToken.m_tokstr;
+            childNode->m_symType = SymbolType::INTEGER;
+
+            varDeclNode->addChildNode(childNode);
+        }
+
+        return ParseResult{varDeclNode, true};
     }
     
-    return ParseResult::invalid();
+    return ParseResult::invalid();    
 }
 
 Parser::ParseResult Parser::assignment_rhs()
@@ -280,9 +353,10 @@ Parser::ParseResult Parser::factor()
 
     if (match(Lexer::TokenType::IDENT))
     {
-        auto numNode = std::make_shared<ASTNode>(ASTNode::NodeType::VAR);
-        numNode->m_varName = m_matchedToken.m_tokstr;
-        return ParseResult::valid(numNode);
+        auto varNode = std::make_shared<ASTNode>(ASTNode::NodeType::VAR);
+        varNode->m_varName = m_matchedToken.m_tokstr;
+        varNode->m_pos = m_matchedToken.m_pos;
+        return ParseResult::valid(varNode);
     }
 
     if (match(Lexer::TokenType::MINUS))
@@ -296,11 +370,10 @@ Parser::ParseResult Parser::factor()
         
         auto numNode = std::make_shared<ASTNode>(ASTNode::NodeType::INTEGER);
         numNode->m_intValue = m_matchedToken.m_integer;
+        numNode->m_pos = m_matchedToken.m_pos;
 
         unaryNode->addChildNode(numNode);
 
-        //std::cout << "VAR: " << m_matchedToken.m_tokstr << "\n";
-        //std::cout << "- (unary)\n";
         return ParseResult::valid(unaryNode);
     }
 

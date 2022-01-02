@@ -4,6 +4,7 @@
 
 #include "parser.h"
 #include "constprop.h"
+#include "irgen.h"
 
 int main(int argc, char *argv[])
 {
@@ -46,6 +47,19 @@ int main(int argc, char *argv[])
         std::cout << "Dumping AST:\n\n";
         parseResults.m_node->dump(std::cout, 0);
 
+        IRGenVisitor irgen;
+        irgen.visit(*parseResults.m_node.get());
+        if (irgen.hasErrors())
+        {
+            std::cout << "Code generation has errors!\n";
+            std::cerr << irgen.getErrors() << "\n";
+        }
+        else
+        {
+            std::cout << "Code generation OK!\n";
+            std::cout << irgen.getCode() << "\n";
+        }
+        std::cout << ".\n";
     }
 
     return EXIT_SUCCESS;

@@ -8,8 +8,9 @@ set(SRC
     src/lexer.cpp
     src/parser.cpp
     src/ast.cpp
+    src/symboltable.cpp
     src/constprop.cpp
+    src/irgen.cpp
     src/main.cpp)
 
 add_executable(tinylang ${SRC})
-

@@ -6,22 +6,11 @@
 #include <iostream>
 #include <unordered_map>
 
+#include "mytypes.h"
 #include "inputstream.h"
 
 namespace Lexer
 {
-
-    struct LinePos
-    {
-        int32_t m_line;
-        int32_t m_col;
-
-        void nextLine()
-        {
-            m_line++;
-            m_col = 0;
-        }
-    };
 
     enum class TokenType : uint16_t
     {

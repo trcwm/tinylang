@@ -16,11 +16,14 @@ void ASTNode::dump(std::ostream &os, size_t depth) const noexcept
         os << "SUB\n";
         break;
     case NodeType::ASSIGN:
-        os << "ASSIGN\n";
+        os << "ASSIGN " << m_varName << "\n";
         break;
     case NodeType::INTEGER:
         os << "INT " << m_intValue << "\n";
         break;
+    case NodeType::VARDECL:
+        os << "VARDECL " << m_varName << "  type: " << static_cast<int>(m_symType) << "\n";
+        break;                
     case NodeType::VAR:
         os << "VAR " << m_varName << "\n";
         break;        

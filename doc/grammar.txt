@@ -2,10 +2,11 @@
 
 statements ::= statement [statements]
 
-statement  ::= assignment | for_statement
+statement  ::= assignment | for_statement | var_decl
 
-assignment    ::= VARIABLE = expr
+assignment    ::= VARIABLE '=' expr
 for_statement ::= 'FOR' VARIABLE '=' expr 'TO' expr
+var_decl      ::= 'VAR' VARIABLE { ',' VARIABLE}
 
 expr ::= term { ('+'|'-') term }
 term ::= factor { ('*'|'/') factor }

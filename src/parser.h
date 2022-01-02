@@ -41,11 +41,13 @@ protected:
     ParseResult term();
     ParseResult factor();
 
-    ParseResult forstatement();
+    ParseResult forStatement();
+    ParseResult varStatement();
 
     bool match(uint16_t id);
     bool match(Lexer::TokenType type);
-
+    bool checkToken(Lexer::TokenType type);
+    
     void error(const char *txt);
 
     Lexer::Lex   m_lex;
@@ -61,10 +63,12 @@ protected:
     static constexpr uint16_t TOK_FOR = 1000;
     static constexpr uint16_t TOK_TO  = 1001;
     static constexpr uint16_t TOK_ENDFOR = 1002;
+    static constexpr uint16_t TOK_VAR = 1003;
 
-    static constexpr std::array<KeywordDef, 3> ms_keywords = {{
+    static constexpr std::array<KeywordDef, 4> ms_keywords = {{
         {"for", TOK_FOR},
         {"to", TOK_TO},
-        {"endfor", TOK_ENDFOR}
+        {"endfor", TOK_ENDFOR},
+        {"var", TOK_VAR}
     }};
 };
