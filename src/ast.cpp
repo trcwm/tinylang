@@ -33,12 +33,21 @@ void ASTNode::dump(std::ostream &os, size_t depth) const noexcept
     case NodeType::DIV:
         os << "DIV\n";
         break;
+    case NodeType::JNE:
+        os << "JNE LABEL #" << m_intValue << "\n";
+        break;
+    case NodeType::JMP:
+        os << "JMP LABEL #" << m_intValue << "\n";
+        break;                
     case NodeType::STATEMENTS:
         os << "STATEMENTS\n";
         break;
     case NodeType::NEG:
         os << "NEG\n";
         break;
+    case NodeType::LABEL:
+        os << "LABEL #" << m_intValue << "\n";
+        break;        
     case NodeType::UNKNOWN:
         os << "???\n";
         break;    
@@ -48,6 +57,12 @@ void ASTNode::dump(std::ostream &os, size_t depth) const noexcept
     case NodeType::FORLOOP:
         os << "FORLOOP\n";
         break;        
+    case NodeType::COMMENT:
+        os << "COMMENT: " << m_comment << "\n";
+        break;       
+    case NodeType::DEALLOC:
+        os << "DEALLOC " << m_intValue << "\n";
+        break;           
     }
 
     for(auto const& child : m_children)

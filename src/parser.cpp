@@ -131,7 +131,7 @@ Parser::ParseResult Parser::forStatement()
     if (match(TOK_FOR))
     {
         auto varDeclNode = std::make_shared<ASTNode>(ASTNode::NodeType::VARDECL);
-
+        
         // peek at the variable and make sure it is in the symbol table
         if (!checkToken(Lexer::TokenType::IDENT))
         {            
@@ -139,7 +139,8 @@ Parser::ParseResult Parser::forStatement()
             return ParseResult::invalid();            
         }
 
-        varDeclNode->m_varName = m_token.m_tokstr;
+        auto loopVarName = m_token.m_tokstr;
+        varDeclNode->m_varName = loopVarName;
         varDeclNode->m_symType = SymbolType::INTEGER;   
 
         // assignment expression
@@ -178,10 +179,63 @@ Parser::ParseResult Parser::forStatement()
         // create for loop AST node
         auto loopNode = std::make_shared<ASTNode>(ASTNode::NodeType::FORLOOP);
 
+        loopNode->addCommentNode("FOR loop start");
         loopNode->addChildNode(varDeclNode);
+
+        // load loop variable with starting state
         loopNode->addChildNode(assignResult.m_node);
-        loopNode->addChildNode(toResult.m_node);
+
+        auto labelId = m_labelCount++;
+        loopNode->addLabelNode(labelId);
+
+        // run the inside block of the loop        
+        loopNode->addCommentNode("FOR inner block");
         loopNode->addChildNode(block.m_node);
+
+        // increment the loop variable
+        loopNode->addCommentNode("FOR increment loopvar");
+        ASTNode varNode(ASTNode::NodeType::VAR);
+        varNode.m_varName = loopVarName;
+        ASTNode oneNode(ASTNode::NodeType::INTEGER);
+        oneNode.m_intValue = 1;
+        oneNode.m_symType = SymbolType::INTEGER;
+        ASTNode addNode(ASTNode::NodeType::ADD);
+        addNode.addChildNode(varNode);
+        addNode.addChildNode(oneNode);
+
+        loopNode->addChildNode(addNode);
+
+        // store the loop variable
+        ASTNode storeNode(ASTNode::NodeType::ASSIGN);
+        storeNode.m_varName = loopVarName;
+        storeNode.m_symType = SymbolType::INTEGER;
+        loopNode->addChildNode(storeNode);
+
+        // load the loop variable via VAR <loop var>
+        // substract the loop variable from the loop end expression using SUB
+        loopNode->addCommentNode("FOR check exit condition");
+        ASTNode subNode(ASTNode::NodeType::SUB);
+        subNode.addChildNode(varNode);
+        subNode.addChildNode(toResult.m_node); // to expression
+
+        loopNode->addChildNode(subNode);
+
+        //compare and jump if not equal using: JNE label
+        ASTNode jneNode(ASTNode::NodeType::JNE);
+        jneNode.m_intValue = labelId;
+        loopNode->addChildNode(jneNode);
+
+        // deallocate loop variable
+        ASTNode deallocNode(ASTNode::NodeType::DEALLOC);
+        
+        //FIXME: 2 is for INTEGER, need to change that
+        //       once we allow other types
+        deallocNode.m_intValue = 2;
+        deallocNode.m_varName  = loopVarName;
+        deallocNode.m_symType = SymbolType::INTEGER;
+        
+        loopNode->addChildNode(deallocNode);
+        loopNode->addCommentNode("FOR loop end");
 
         return ParseResult::valid(loopNode);
     }
@@ -304,8 +358,6 @@ Parser::ParseResult Parser::term()
         {
             return ParseResult::invalid();
         }
-
-        //std::cout << "OP: " << op << "\n";
 
         std::shared_ptr<ASTNode> opNode;
         if (opType == Lexer::TokenType::STAR)

@@ -47,12 +47,14 @@ protected:
     bool match(uint16_t id);
     bool match(Lexer::TokenType type);
     bool checkToken(Lexer::TokenType type);
-    
+
     void error(const char *txt);
 
     Lexer::Lex   m_lex;
     Lexer::Token m_token;
     Lexer::Token m_matchedToken;
+
+    int m_labelCount = 0;
 
     struct KeywordDef
     {

@@ -36,7 +36,12 @@ public:
         FORLOOP,
         INTEGER,
         ASSIGN,
-        STATEMENTS
+        LABEL,
+        JMP,
+        JNE,
+        STATEMENTS,
+        COMMENT,
+        DEALLOC         ///< deallocate local stack space (in bytes)
     };
 
     explicit ASTNode(NodeType mytype) : m_type(mytype) {}
@@ -56,6 +61,26 @@ public:
         m_children.push_back(node);
     }
 
+    void addChildNode(const ASTNode &node)
+    {
+        auto nodePtr = std::make_shared<ASTNode>(node);
+        m_children.push_back(nodePtr);
+    }
+
+    void addLabelNode(int labelId)
+    {
+        auto labelNode = std::make_shared<ASTNode>(NodeType::LABEL);
+        labelNode->m_intValue = labelId;
+        m_children.push_back(labelNode);
+    }
+
+    void addCommentNode(const std::string &comment)
+    {
+        auto commentNode = std::make_shared<ASTNode>(NodeType::COMMENT);
+        commentNode->m_comment = comment;
+        m_children.push_back(commentNode);
+    }
+
     ASTNode* child(size_t idx) const noexcept
     {
         return m_children.at(idx).get();
@@ -67,7 +92,8 @@ public:
 
     NodeType        m_type;
     int16_t         m_intValue;     ///< variable value (when type = INTEGER)
-    std::string     m_varName;      ///< variable name (when type = VAR)
+    std::string     m_varName;      ///< variable name (when type = VAR and ASSIGN)
+    std::string     m_comment;      ///< comment string for COMMENT nodes
     LinePos         m_pos;          ///< line position where this node originated
     SymbolType      m_symType;      ///< symbolt type (when type = VARDECL)
 };
