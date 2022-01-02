@@ -30,8 +30,8 @@ bool Parser::checkToken(Lexer::TokenType type)
 }
 
 bool Parser::match(uint16_t id)
-{
-    if (static_cast<uint16_t>(m_token.m_type) == id)
+{    
+    if (m_token.m_keyword == id)
     {
         m_matchedToken = m_token;
         m_token = m_lex.nextToken();
@@ -93,6 +93,12 @@ Parser::ParseResult Parser::statement()
     if (tryVar.m_ok)
     {
         return tryVar;
+    }
+
+    auto tryIf = ifStatement();
+    if (tryIf.m_ok)
+    {
+        return tryIf;
     }
 
     return ParseResult::invalid();
@@ -278,6 +284,96 @@ Parser::ParseResult Parser::varStatement()
     return ParseResult::invalid();    
 }
 
+Parser::ParseResult Parser::ifStatement()
+{
+    if (match(TOK_IF))
+    {
+        auto ifNode = std::make_shared<ASTNode>(ASTNode::NodeType::STATEMENTS);
+
+        auto logic = logicalExpression();
+        if (!logic.m_ok)
+        {
+            error("Expected a logical expression following IF");
+            return ParseResult::invalid();
+        }
+
+        if (!match(TOK_THEN))
+        {
+            error("Expected THEN");
+            return ParseResult::invalid();
+        }
+
+        auto block1 = statements();
+
+        if (!block1.m_ok)
+        {
+            error("Expected a statement block after THEN");
+            return ParseResult::invalid();
+        }
+
+        // optional ELSE block
+        std::shared_ptr<ASTNode> block2Node = nullptr;
+        if (match(TOK_ELSE))
+        {
+            auto block2 = statements();
+            if (!block2.m_ok)
+            {
+                error("Expected a statement block after ELSE");
+                return ParseResult::invalid();
+            }
+            block2Node = block2.m_node;
+        }
+
+        // required ENDIF
+        if (!match(TOK_ENDIF))
+        {
+            error("IF without ENDIF");
+            return ParseResult::invalid();
+        }
+
+        ifNode->addCommentNode("IF start");
+        // first, evaluate the logic expressions and sub
+        ifNode->addChildNode(logic.m_node);
+
+        // create a jump over block1 if not equal
+        auto jmpLabelId  = m_labelCount++;
+        ASTNode jneNode(ASTNode::NodeType::JNE);
+        jneNode.m_intValue = jmpLabelId;
+
+        ifNode->addChildNode(jneNode);
+
+        // add block1 statements
+        ifNode->addCommentNode("IF block1");
+        ifNode->addChildNode(block1.m_node);
+
+        // add block2 statements if it exists
+        if (block2Node != nullptr)
+        {
+            // insert jump over block1 to exit
+            auto exitLabelId = m_labelCount++;
+            ASTNode jmpNode(ASTNode::NodeType::JMP);
+            jmpNode.m_intValue = exitLabelId;
+
+            ifNode->addChildNode(jmpNode);
+
+            ifNode->addLabelNode(jmpLabelId);   // location of 2nd block
+            ifNode->addCommentNode("IF block2");
+            ifNode->addChildNode(block2Node);   // add block 2 statements
+
+            ifNode->addLabelNode(exitLabelId);
+        }
+        else
+        {
+            // only one block
+            ifNode->addLabelNode(jmpLabelId);
+        }
+        ifNode->addCommentNode("IF end");
+
+        return ParseResult::valid(ifNode);
+    }
+    return ParseResult::invalid();
+}
+
 Parser::ParseResult Parser::assignment_rhs()
 {
     if (!match(Lexer::TokenType::EQUALS))
@@ -294,6 +390,69 @@ Parser::ParseResult Parser::assignment_rhs()
     }
 
     return exprResult;
+}
+
+Parser::ParseResult Parser::logicalExpression()
+{
+    auto expr1 = expression();
+    if (!expr1.m_ok)
+    {
+        return ParseResult::invalid();
+    }
+
+    char c = 0;
+    if (match(Lexer::TokenType::EQUALS))
+    {
+        c = m_matchedToken.m_tokstr[0];
+    }
+    else if (match(Lexer::TokenType::SMALLER))
+    {
+        c = m_matchedToken.m_tokstr[0];
+        error("Not supported");
+        return ParseResult::invalid();
+    }
+    else if (match(Lexer::TokenType::GREATER))
+    {
+        c = m_matchedToken.m_tokstr[0];
+        error("Not supported");
+        return ParseResult::invalid();
+    }
+    else if (match(Lexer::TokenType::SMALLEROREQUAL))
+    {
+        c = m_matchedToken.m_tokstr[0];
+        error("Not supported");
+        return ParseResult::invalid();
+    }
+    else if (match(Lexer::TokenType::GREATEROREQUAL))
+    {
+        c = m_matchedToken.m_tokstr[0];
+        error("Not supported");
+        return ParseResult::invalid();
+    }
+    else if (match(Lexer::TokenType::UNEQUAL))
+    {
+        c = m_matchedToken.m_tokstr[0];
+        error("Not supported");
+        return ParseResult::invalid();        
+    }
+    else
+    {
+        error("Expected a comparison operator");
+        return ParseResult::invalid();
+    }
+
+    auto expr2 = expression();
+    if (!expr2.m_ok)
+    {
+        return ParseResult::invalid();
+    }
+
+    // create SUB node for comparison
+    auto subNode = std::make_shared<ASTNode>(ASTNode::NodeType::SUB);
+    subNode->addChildNode(expr1.m_node);
+    subNode->addChildNode(expr2.m_node);
+
+    return ParseResult::valid(subNode);
 }
 
 Parser::ParseResult Parser::expression()

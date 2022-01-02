@@ -38,7 +38,9 @@ public:
         ASSIGN,
         LABEL,
         JMP,
-        JNE,
+        JNE,            ///< jump not equal
+        //JE,             ///< jump equal
+        IF,
         STATEMENTS,
         COMMENT,
         DEALLOC         ///< deallocate local stack space (in bytes)

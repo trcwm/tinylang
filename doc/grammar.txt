@@ -6,8 +6,10 @@ statement  ::= assignment | for_statement | var_decl
 
 assignment    ::= VARIABLE '=' expr
 for_statement ::= 'FOR' VARIABLE '=' expr 'TO' expr
+if_statement  ::= 'IF' logical_expr 'THEN' statements { ELSE statements } 'ENDFOR'
 var_decl      ::= 'VAR' VARIABLE { ',' VARIABLE}
 
+logical_expr ::= expr ( '=' | '<' | '>' | '<=' | '>=' | '!=' ) expr
 expr ::= term { ('+'|'-') term }
 term ::= factor { ('*'|'/') factor }
 factor ::= '(' ')' | NUMBER | VARIABLE | '-' NUMBER

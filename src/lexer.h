@@ -36,7 +36,8 @@ namespace Lexer
         GREATER,    // >
         SMALLER,    // <
         GREATEROREQUAL, // >=
-        SMALLEROREQUAL, // <        
+        SMALLEROREQUAL, // <=
+        UNEQUAL,        // !=
         KEYWORD = 1000
     };
 
@@ -45,7 +46,7 @@ namespace Lexer
         union
         {
             TokenType   m_type;
-            uint16_t    m_keyword;
+            uint16_t     m_keyword;
         };
 
         int16_t     m_integer;
@@ -146,7 +147,7 @@ namespace Lexer
         Token m_curtok;
         LinePos m_curpos;
 
-        std::unordered_map<std::string, int16_t> m_keywords;
+        std::unordered_map<std::string, uint16_t> m_keywords;
         std::string m_extendedAlphaCharacters;
 
         bool m_caseSensitive;

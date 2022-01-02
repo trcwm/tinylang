@@ -35,7 +35,10 @@ void IRGenVisitor::visit(const ASTNode &v)
         break;
     case ASTNode::NodeType::JNE:
         m_code << "JNE @" << v.m_intValue << "\n";
-        break;        
+        break; 
+    case ASTNode::NodeType::JMP:
+        m_code << "JMP @" << v.m_intValue << "\n";
+        break;                
     case ASTNode::NodeType::ASSIGN:
         {
             auto *sym = m_symTable.getSymbol(v.m_varName);
@@ -45,8 +48,10 @@ void IRGenVisitor::visit(const ASTNode &v)
                 ss << "Unknown variable " << v.m_varName;
                 error(ss.str(), v.m_pos);
             }
-
-            m_code << "STORE " << sym->m_offset << "\t\t;" << v.m_varName << "\n";
+            else
+            {
+                m_code << "STORE " << sym->m_offset << "\t\t;" << v.m_varName << "\n";
+            }
         }
         break;
     case ASTNode::NodeType::COMMENT:\

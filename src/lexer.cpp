@@ -202,6 +202,18 @@ Lexer::Token Lexer::Lex::nextToken()
 
                 return m_curtok;
             }
+            else if (c == '!')
+            {
+                advance();
+                if (c != '=')
+                {
+                    m_curtok.m_type = TokenType::ERROR;
+                    return m_curtok;
+                }
+
+                m_curtok.m_type = TokenType::UNEQUAL;
+                return m_curtok;
+            }
             else if (c == ':')
             {
                 m_curtok.m_type = TokenType::COLON;

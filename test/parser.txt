@@ -1,11 +1,11 @@
-var x,y,z
+var x
 
 x = 10
-y = 20
-z = 30
 
-x = x + y + z
-
-for I = 1+2+3+4+5+6+7+8 to 30
-    x = I+10
-endfor
+if x = 10 then
+    x = 20
+else
+    for I=1 to 10
+        x = x + 1
+    endfor
+endif

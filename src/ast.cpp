@@ -57,6 +57,9 @@ void ASTNode::dump(std::ostream &os, size_t depth) const noexcept
     case NodeType::FORLOOP:
         os << "FORLOOP\n";
         break;        
+    case NodeType::IF:
+        os << "IF\n";
+        break;   
     case NodeType::COMMENT:
         os << "COMMENT: " << m_comment << "\n";
         break;       
